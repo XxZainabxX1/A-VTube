@@ -1,0 +1,348 @@
+<!doctype html>
+<html lang="ar" dir="rtl">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,maximum-scale=1,user-scalable=no">
+<meta name="theme-color" content="#100d20">
+<link rel="manifest" href="manifest.webmanifest">
+<link rel="icon" href="nova-icon.svg" type="image/svg+xml">
+<link rel="apple-touch-icon" href="apple-touch-icon.png">
+<meta name="mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+<meta name="apple-mobile-web-app-title" content="NOVA Studio">
+<title>NOVA VTuber Studio</title>
+<style>
+:root{--bg:#100d20;--panel:#1b1730;--panel2:#241e3d;--line:#393052;--text:#f5f1ff;--muted:#aaa1c4;--pink:#ff5fc8;--cyan:#65e6ff;--purple:#a78bfa}
+*{box-sizing:border-box;-webkit-tap-highlight-color:transparent}html{background:#100d20}body{margin:0;min-height:100dvh;overscroll-behavior:none;-webkit-user-select:none;user-select:none;padding:env(safe-area-inset-top) env(safe-area-inset-right) env(safe-area-inset-bottom) env(safe-area-inset-left);background:radial-gradient(circle at 85% 0,#35204d 0,transparent 34%),var(--bg);color:var(--text);font-family:system-ui,-apple-system,"Segoe UI",sans-serif}
+header{padding:20px 17px 12px;display:flex;align-items:center;justify-content:space-between;gap:10px}
+.logo{font-weight:900;letter-spacing:1px;font-size:20px}.logo span{color:var(--pink)}.sub{color:var(--muted);font-size:11px;margin-top:3px}
+.status{border:1px solid #4c4169;background:#211b35;padding:7px 10px;border-radius:20px;font-size:11px;color:#c9baff}
+main{padding:8px 14px 30px;max-width:760px;margin:auto}
+.preview{position:relative;overflow:hidden;border:1px solid var(--line);border-radius:24px;background:linear-gradient(145deg,#211936,#11101e);min-height:320px;display:grid;place-items:center}
+.preview:before{content:"";position:absolute;inset:0;background:radial-gradient(circle at 50% 45%,#7c3aed24,transparent 48%);pointer-events:none}
+#avatarImage{max-width:78%;max-height:300px;object-fit:contain;display:none;z-index:1;filter:drop-shadow(0 15px 25px #0008)}
+#avatarModel{width:100%;height:320px;display:none;z-index:1}
+.empty{text-align:center;padding:30px;color:var(--muted);z-index:1}.empty .symbol{font-size:55px;margin-bottom:10px}.empty b{display:block;color:var(--text);font-size:17px}
+.camera{position:absolute;inset:0;width:100%;height:100%;object-fit:cover;opacity:.18;display:none}
+.preview-actions{position:absolute;bottom:12px;left:12px;right:12px;display:flex;justify-content:space-between;z-index:3;gap:8px}
+.pill{border:1px solid #ffffff30;background:#171329dd;color:white;border-radius:20px;padding:8px 12px;font-size:11px}
+.tabs{display:flex;gap:8px;margin:15px 0;overflow:auto}
+.tab{flex:1;white-space:nowrap;border:1px solid var(--line);background:var(--panel);color:var(--muted);padding:11px 12px;border-radius:14px;font-weight:700}
+.tab.active{background:linear-gradient(120deg,#6d3cc5,#a43c91);border-color:transparent;color:white}
+.card{background:linear-gradient(145deg,var(--panel),#171329);border:1px solid var(--line);border-radius:20px;padding:15px;margin-bottom:12px}
+h3{font-size:15px;margin:0 0 12px}.muted{color:var(--muted);font-size:12px;line-height:1.7}
+.grid{display:grid;grid-template-columns:1fr 1fr;gap:9px}
+button,.filebtn{font:inherit;cursor:pointer}
+.action{border:1px solid var(--line);background:var(--panel2);color:var(--text);padding:12px;border-radius:13px;font-weight:700;font-size:13px}
+.action.primary{background:linear-gradient(110deg,#8b4de2,#d343a4);border:0}
+.action.cyan{border-color:#356276;color:var(--cyan)}
+input[type=file]{display:none}
+label.filebtn{display:block;text-align:center}
+.range{margin:13px 0}.range-head{display:flex;justify-content:space-between;font-size:12px;margin-bottom:7px}.range-head span:last-child{color:var(--cyan)}
+input[type=range]{width:100%;accent-color:var(--pink)}
+select{width:100%;background:#171329;color:white;border:1px solid var(--line);padding:12px;border-radius:12px}
+.track-readout{display:flex;gap:8px;flex-wrap:wrap;margin-top:10px}.track-readout span{background:#121a2b;border:1px solid #34445f;border-radius:10px;padding:7px 9px;font-size:11px;color:#ccefff}.notice{border-right:3px solid var(--cyan);padding:9px 12px;background:#142431;border-radius:10px;color:#c8f4ff;font-size:11px;line-height:1.7}
+.offline{display:none;background:#3a2410;color:#ffd9a8;text-align:center;font-size:11px;padding:6px}body.is-offline .offline{display:block}
+button:active,.filebtn:active{transform:scale(.97)}
+footer{text-align:center;color:#827a9a;font-size:10px;padding:12px}
+@media(min-width:600px){.preview{min-height:410px}#avatarModel{height:410px}#avatarImage{max-height:380px}}
+</style>
+</head>
+<body>
+<div class="offline">أنتِ بدون إنترنت — التتبّع قد لا يعمل أول مرة، لكن الشخصية المحفوظة تشتغل.</div>
+<header><div><div class="logo">NOVA <span>VTuber</span> STUDIO</div><div class="sub">اصنعي شخصيتج… وابدئي الحركة ✦</div></div><div style="display:flex;align-items:center;gap:7px"><button class="pill" id="installBtn" hidden>＋ تثبيت</button><div class="status">● نسخة تجريبية</div></div></header>
+<main>
+<section class="preview" id="preview">
+<video class="camera" id="camera" autoplay playsinline muted></video>
+<div class="empty" id="empty"><div class="symbol">✧</div><b>مساحة عرض الشخصية</b><div class="muted">ارفعي صورة أنمي أو موديل ثلاثي الأبعاد حتى يظهر هنا</div></div>
+<img id="avatarImage" alt="الشخصية المختارة">
+<model-viewer id="avatarModel" camera-controls auto-rotate shadow-intensity="1" exposure="1" environment-image="neutral" style="background:transparent"></model-viewer>
+<div class="preview-actions"><span class="pill" id="typeTag">لم يتم اختيار شخصية</span><span class="pill" id="camTag">الكاميرا متوقفة</span></div>
+</section>
+<div class="tabs">
+<button class="tab active" data-tab="character">الشخصية</button>
+<button class="tab" data-tab="motion">التحريك</button>
+<button class="tab" data-tab="studio">الاستوديو</button>
+</div>
+<section id="character" class="tabpage">
+<div class="card">
+<h3>✦ أضيفي شخصيتج</h3>
+<div class="grid">
+<label class="filebtn action primary" for="imageFile">＋ إضافة صورة 2D</label>
+<label class="filebtn action cyan" for="modelFile">＋ إضافة موديل 3D</label>
+<input id="imageFile" type="file" accept="image/png,image/jpeg,image/webp">
+<input id="modelFile" type="file" accept=".glb,.gltf,.vrm,model/gltf-binary,model/gltf+json">
+</div>
+<p class="muted">2D: PNG أو JPG أو WebP. يفضّل صورة الشخصية بخلفية شفافة. 3D: ملفات GLB/GLTF؛ دعم VRM يعتمد على توافق الملف.</p>
+<div class="grid" style="margin-top:10px">
+<button class="action" id="saveAvatar">حفظ الشخصية بهذا الجهاز</button>
+<button class="action" id="clearAvatar">مسح الشخصية المحفوظة</button>
+</div>
+<p class="muted" id="savedStatus">لا توجد شخصية محفوظة بعد.</p>
+<div class="notice">اختاري ملفات تملكين حق استخدامها. الحفظ محلي على جهازج عبر قاعدة بيانات المتصفح، ولا تُرفع ملفات الشخصية إلى خادم.</div>
+</div>
+<div class="card">
+<h3>تعبيرات الشخصية</h3>
+<div class="grid">
+<button class="action expression" data-face="😊">😊 ابتسامة</button><button class="action expression" data-face="😢">😢 حزن</button>
+<button class="action expression" data-face="😮">😮 دهشة</button><button class="action expression" data-face="😎">😎 ثقة</button>
+</div>
+<p class="muted" id="faceStatus">التعبيرات هنا معاينة شكلية؛ ربطها بعظام الوجه يحتاج موديل مجهز للتحريك.</p>
+</div>
+</section>
+<section id="motion" class="tabpage" hidden>
+<div class="card">
+<h3>◉ إعدادات التحريك</h3>
+<button class="action primary" id="startCamera" style="width:100%">تشغيل الكاميرا والتتبّع</button>
+<button class="action" id="stopCamera" style="width:100%;margin-top:8px">إيقاف الكاميرا</button>
+<div class="track-readout">
+<span id="trackState">التتبّع: متوقف</span><span id="mouthState">فتح الفم: —</span><span id="blinkState">الرمش: —</span>
+</div>
+<div style="height:14px"></div>
+<h3>🎙️ تحريك بالصوت والميكروفون</h3>
+<div class="grid">
+<button class="action primary" id="startMic">تشغيل الميكروفون</button>
+<button class="action" id="stopMic">إيقاف الميكروفون</button>
+</div>
+<div class="range">
+<div class="range-head"><span>مستوى الصوت</span><span id="audioLevel">0%</span></div>
+<div style="height:12px;background:#302744;border-radius:20px;overflow:hidden"><div id="audioMeter" style="height:100%;width:0%;background:linear-gradient(90deg,#65e6ff,#ff5fc8);border-radius:20px;transition:width .08s"></div></div>
+</div>
+<div class="track-readout"><span id="micState">الميكروفون: متوقف</span><span id="voiceMouthState">استجابة الصوت: —</span></div>
+<p class="muted">الميكروفون يقيس شدة صوتج ويعرض استجابة فتح الفم كمؤشر تجريبي. تحريك شكل الفم نفسه يحتاج شخصية 2D مفصولة الطبقات أو موديل 3D مجهز بعظام الوجه.</p>
+<p class="muted">تتبّع تجريبي عبر MediaPipe: يقرأ موضع الوجه وميله وفتح الفم والرمش. يحرّك المعاينة ككل؛ لا يحرّك أجزاء الوجه المنفصلة داخل ملفات 2D أو عظام Rig في 3D بعد.</p>
+<div class="notice">يحتاج اتصال إنترنت أول مرة لتحميل نموذج التتبّع، ومتصفحاً يدعم الكاميرا عبر HTTPS أو localhost. الفيديو يُعالج داخل المتصفح ولا يُرفع من هذه الصفحة.</div>
+<div class="range"><div class="range-head"><span>حساسية الحركة</span><span id="sensitivityVal">50%</span></div><input id="sensitivity" type="range" min="0" max="100" value="50"></div>
+<div class="range"><div class="range-head"><span>حجم الشخصية</span><span id="sizeVal">100%</span></div><input id="size" type="range" min="50" max="150" value="100"></div>
+</div>
+</section>
+<section id="studio" class="tabpage" hidden>
+<div class="card">
+<h3>✧ إعدادات الاستوديو</h3>
+<label class="muted" for="bgSelect">خلفية مساحة العرض</label>
+<select id="bgSelect"><option value="default">بنفسجي فضائي</option><option value="pink">وردي ليلي</option><option value="blue">أزرق مجرّي</option><option value="dark">أسود أنيق</option></select>
+<div style="height:12px"></div>
+<button class="action primary" id="record" style="width:100%">● بدء تسجيل الشاشة</button>
+<p class="muted" id="recordStatus">التسجيل يعتمد على دعم المتصفح لالتقاط الشاشة.</p>
+</div>
+<div class="card"><h3>حول NOVA</h3><p class="muted">واجهة أولية لتجربة استيراد الشخصيات وعرضها على أندرويد. ليست بعدُ بديلاً كاملاً عن برامج VTuber الاحترافية.</p></div>
+</section>
+<footer>NOVA VTuber Studio · Prototype 0.4</footer>
+</main>
+<canvas id="trackCanvas" width="640" height="480" hidden></canvas>
+<script type="module" src="https://cdn.jsdelivr.net/npm/@google/model-viewer@3.5.0/dist/model-viewer.min.js"></script>
+<script>
+const $=id=>document.getElementById(id);
+const img=$('avatarImage'), model=$('avatarModel'), empty=$('empty');
+function showType(t){$('typeTag').textContent=t;empty.style.display='none'}
+
+document.querySelectorAll('.tab').forEach(b=>b.onclick=()=>{document.querySelectorAll('.tab').forEach(x=>x.classList.toggle('active',x===b));document.querySelectorAll('.tabpage').forEach(x=>x.hidden=x.id!==b.dataset.tab)});
+document.querySelectorAll('.expression').forEach(b=>b.onclick=()=>{$('faceStatus').textContent='تم اختيار تعبير '+b.dataset.face+' — هذه معاينة وليست تحريكاً فعلياً لملامح الموديل.';b.style.borderColor='var(--pink)';document.querySelectorAll('.expression').forEach(x=>{if(x!==b)x.style.borderColor='var(--line)'})});
+var userScale=1;
+$('sensitivity').oninput=e=>$('sensitivityVal').textContent=e.target.value+'%';
+$('size').oninput=e=>{$('sizeVal').textContent=e.target.value+'%';userScale=e.target.value/100;applyFaceMotion()};
+let faceLandmarker=null, tracking=false, rafId=null, lastVideoTime=-1, visionModule=null;
+let faceX=0, faceY=0, faceRoll=0, faceScale=1;
+function applyFaceMotion(){
+  const sens=$('sensitivity').value/50;const transform=`translate(${faceX*sens}px,${faceY*sens}px) rotate(${faceRoll*sens}deg) scale(${faceScale*userScale})`;
+  if(img.style.display!=='none') img.style.transform=transform;
+  if(model.style.display!=='none') model.style.transform=transform;
+}
+async function loadFaceTracker(){
+  if(faceLandmarker)return faceLandmarker;
+  if(!visionModule){
+    visionModule=await import('https://cdn.jsdelivr.net/npm/@mediapipe/tasks-vision@0.10.14/+esm');
+  }
+  const {FilesetResolver,FaceLandmarker}=visionModule;
+  const fileset=await FilesetResolver.forVisionTasks('https://cdn.jsdelivr.net/npm/@mediapipe/tasks-vision@0.10.14/wasm');
+  faceLandmarker=await FaceLandmarker.createFromOptions(fileset,{
+    baseOptions:{modelAssetPath:'https://storage.googleapis.com/mediapipe-models/face_landmarker/face_landmarker/float16/1/face_landmarker.task'},
+    runningMode:'VIDEO',numFaces:1,outputFaceBlendshapes:true
+  });
+  return faceLandmarker;
+}
+function trackingLoop(){
+  if(!tracking)return;
+  const video=$('camera');
+  if(video.readyState>=2 && video.currentTime!==lastVideoTime){
+    lastVideoTime=video.currentTime;
+    const result=faceLandmarker.detectForVideo(video,performance.now());
+    const pts=result.faceLandmarks?.[0];
+    if(pts){
+      const le=pts[33], re=pts[263], nose=pts[1], chin=pts[152], forehead=pts[10];
+      const eyeMidX=(le.x+re.x)/2, eyeMidY=(le.y+re.y)/2;
+      const eyeDist=Math.max(.001,Math.hypot(re.x-le.x,re.y-le.y));
+      const yaw=(nose.x-eyeMidX)/eyeDist;
+      const roll=Math.atan2(re.y-le.y,re.x-le.x)*180/Math.PI;
+      const faceMidY=(forehead.y+chin.y)/2;
+      faceX=Math.max(-42,Math.min(42,(.5-nose.x)*85));
+      faceY=Math.max(-24,Math.min(24,(.48-faceMidY)*55));
+      faceRoll=Math.max(-18,Math.min(18,-roll*.65));
+      faceScale=1+Math.max(-.08,Math.min(.08,-yaw*.08));
+      applyFaceMotion();
+      const cats=result.faceBlendshapes?.[0]?.categories||[];
+      const score=name=>cats.find(c=>c.categoryName===name)?.score||0;
+      const jaw=score('jawOpen'), blink=Math.max(score('eyeBlinkLeft'),score('eyeBlinkRight'));
+      $('trackState').textContent='التتبّع: الوجه موجود';
+      $('mouthState').textContent='فتح الفم: '+Math.round(jaw*100)+'%';
+      $('blinkState').textContent='الرمش: '+(blink>.45?'مغمضان':'طبيعي');window.__applyExpr(jaw,blink);
+    }else{
+      $('trackState').textContent='التتبّع: ابحث عن الوجه';
+      $('mouthState').textContent='فتح الفم: —';$('blinkState').textContent='الرمش: —';
+      faceX*=.85;faceY*=.85;faceRoll*=.85;applyFaceMotion();
+    }
+  }
+  rafId=requestAnimationFrame(trackingLoop);
+}
+$('startCamera').onclick=async()=>{
+  try{
+    if(!navigator.mediaDevices?.getUserMedia)throw new Error('camera unavailable');
+    $('trackState').textContent='التتبّع: تحميل النموذج…';
+    const stream=await navigator.mediaDevices.getUserMedia({video:{facingMode:'user',width:{ideal:640},height:{ideal:480}},audio:false});
+    const video=$('camera');video.srcObject=stream;video.style.display='block';await video.play();
+    $('camTag').textContent='الكاميرا تعمل';
+    await loadFaceTracker();tracking=true;lastVideoTime=-1;trackingLoop();
+  }catch(err){
+    $('trackState').textContent='التتبّع: تعذّر التشغيل';
+    alert('تعذر تشغيل التتبّع. تأكدي من إذن الكاميرا والاتصال بالإنترنت، وافتحي الصفحة عبر HTTPS أو localhost. '+(err?.message||''));
+  }
+};
+$('stopCamera').onclick=()=>{
+  tracking=false;if(rafId)cancelAnimationFrame(rafId);
+  const v=$('camera');if(v.srcObject)v.srcObject.getTracks().forEach(t=>t.stop());v.srcObject=null;v.style.display='none';
+  $('camTag').textContent='الكاميرا متوقفة';$('trackState').textContent='التتبّع: متوقف';
+  $('mouthState').textContent='فتح الفم: —';$('blinkState').textContent='الرمش: —';
+  faceX=faceY=faceRoll=0;faceScale=1;applyFaceMotion();if(window.__applyExpr)window.__applyExpr(0,0);
+};
+
+// Microphone audio analyser: visual mouth-response meter (not a rigged mouth).
+let micStream=null, audioContext=null, analyser=null, micFrame=null;
+$('startMic').onclick=async()=>{
+  try{
+    if(!navigator.mediaDevices?.getUserMedia)throw new Error('microphone unavailable');
+    micStream=await navigator.mediaDevices.getUserMedia({audio:{echoCancellation:true,noiseSuppression:true,autoGainControl:true},video:false});
+    audioContext=new (window.AudioContext||window.webkitAudioContext)();
+    const source=audioContext.createMediaStreamSource(micStream);
+    analyser=audioContext.createAnalyser();analyser.fftSize=1024;source.connect(analyser);
+    const data=new Uint8Array(analyser.fftSize);
+    $('micState').textContent='الميكروفون: يعمل';
+    const meter=()=>{
+      if(!analyser)return;
+      analyser.getByteTimeDomainData(data);
+      let sum=0;for(let i=0;i<data.length;i++){const v=(data[i]-128)/128;sum+=v*v;}
+      const rms=Math.sqrt(sum/data.length);
+      const level=Math.max(0,Math.min(100,Math.round(rms*300)));
+      $('audioLevel').textContent=level+'%';
+      $('audioMeter').style.width=level+'%';
+      $('voiceMouthState').textContent='استجابة الصوت: '+(level>12?'صوت — فتح تجريبي':'صمت — مغلق تجريبياً');
+      micFrame=requestAnimationFrame(meter);
+    };
+    meter();
+  }catch(err){
+    $('micState').textContent='الميكروفون: تعذّر التشغيل';
+    alert('تعذر تشغيل الميكروفون. اسمحي للمتصفح باستخدام الميكروفون وافتحي الموقع عبر HTTPS. '+(err?.message||''));
+  }
+};
+$('stopMic').onclick=()=>{
+  if(micFrame)cancelAnimationFrame(micFrame);
+  micFrame=null;analyser=null;
+  if(micStream)micStream.getTracks().forEach(t=>t.stop());
+  micStream=null;
+  if(audioContext){audioContext.close().catch(()=>{});audioContext=null;}
+  $('micState').textContent='الميكروفون: متوقف';
+  $('voiceMouthState').textContent='استجابة الصوت: —';
+  $('audioLevel').textContent='0%';$('audioMeter').style.width='0%';
+};
+
+$('bgSelect').onchange=e=>{const colors={default:'linear-gradient(145deg,#211936,#11101e)',pink:'linear-gradient(145deg,#542447,#17101f)',blue:'linear-gradient(145deg,#173d59,#101421)',dark:'linear-gradient(145deg,#222,#090909)'};$('preview').style.background=colors[e.target.value]};
+
+// Local character vault: stores the imported file in this browser on this device.
+let currentAvatarFile=null, currentAvatarKind=null, currentAvatarUrl=null;
+function openVault(){
+  return new Promise((resolve,reject)=>{
+    const req=indexedDB.open('nova-vtuber-vault',1);
+    req.onupgradeneeded=()=>req.result.createObjectStore('avatars');
+    req.onsuccess=()=>resolve(req.result);req.onerror=()=>reject(req.error);
+  });
+}
+async function vaultPut(file,kind){
+  const db=await openVault();
+  return new Promise((resolve,reject)=>{
+    const tx=db.transaction('avatars','readwrite');
+    tx.objectStore('avatars').put({file,kind,name:file.name},'active');
+    tx.oncomplete=()=>{db.close();resolve()};tx.onerror=()=>{db.close();reject(tx.error)};
+  });
+}
+async function vaultGet(){
+  const db=await openVault();
+  return new Promise((resolve,reject)=>{
+    const req=db.transaction('avatars').objectStore('avatars').get('active');
+    req.onsuccess=()=>{db.close();resolve(req.result||null)};req.onerror=()=>{db.close();reject(req.error)};
+  });
+}
+async function vaultDelete(){
+  const db=await openVault();
+  return new Promise((resolve,reject)=>{
+    const tx=db.transaction('avatars','readwrite');tx.objectStore('avatars').delete('active');
+    tx.oncomplete=()=>{db.close();resolve()};tx.onerror=()=>{db.close();reject(tx.error)};
+  });
+}
+function displayAvatar(file,kind,name){
+  if(currentAvatarUrl)URL.revokeObjectURL(currentAvatarUrl);
+  currentAvatarFile=file;currentAvatarKind=kind;currentAvatarUrl=URL.createObjectURL(file);
+  if(kind==='2d'){img.src=currentAvatarUrl;img.style.display='block';model.style.display='none';}
+  else{model.src=currentAvatarUrl;model.style.display='block';img.style.display='none';}
+  showType((kind==='2d'?'شخصية 2D · ':'شخصية 3D · ')+name);
+}
+$('imageFile').addEventListener('change',e=>{const f=e.target.files[0];if(f)displayAvatar(f,'2d',f.name)});
+$('modelFile').addEventListener('change',e=>{const f=e.target.files[0];if(f)displayAvatar(f,'3d',f.name)});
+$('saveAvatar').onclick=async()=>{
+  if(!currentAvatarFile){$('savedStatus').textContent='اختاري صورة أو موديل أولاً.';return}
+  try{await vaultPut(currentAvatarFile,currentAvatarKind);$('savedStatus').textContent='تم حفظ '+currentAvatarFile.name+' على هذا الجهاز.'}
+  catch(e){$('savedStatus').textContent='تعذر الحفظ؛ قد تكون مساحة المتصفح غير كافية.'}
+};
+$('clearAvatar').onclick=async()=>{
+  try{await vaultDelete();$('savedStatus').textContent='تم مسح الشخصية المحفوظة من هذا الجهاز.'}
+  catch(e){$('savedStatus').textContent='ماكو شخصية محفوظة أو تعذر المسح.'}
+};
+(async()=>{
+  try{
+    const saved=await vaultGet();
+    if(saved?.file){displayAvatar(saved.file,saved.kind,saved.name);$('savedStatus').textContent='تم استرجاع الشخصية المحفوظة: '+saved.name}
+  }catch(e){$('savedStatus').textContent='الحفظ المحلي غير متاح في هذا المتصفح.'}
+})();
+
+// Installable web app support (requires HTTPS or localhost).
+let installPrompt=null;
+window.addEventListener('beforeinstallprompt',e=>{
+  e.preventDefault();installPrompt=e;$('installBtn').hidden=false;
+});
+$('installBtn').onclick=async()=>{
+  if(!installPrompt)return;
+  installPrompt.prompt();await installPrompt.userChoice;installPrompt=null;$('installBtn').hidden=true;
+};
+if('serviceWorker' in navigator && (location.protocol==='https:'||location.hostname==='localhost')){
+  window.addEventListener('load',()=>navigator.serviceWorker.register('./sw.js').catch(()=>{}));
+  let reloaded=false;navigator.serviceWorker.addEventListener('controllerchange',()=>{if(reloaded||!navigator.serviceWorker.controller)return;reloaded=true;});
+}
+
+
+// App niceties: online/offline badge, saved-character reload, update handling.
+function syncNet(){document.body.classList.toggle('is-offline',!navigator.onLine)}
+addEventListener('online',syncNet);addEventListener('offline',syncNet);syncNet();
+addEventListener('appinstalled',()=>{$('installBtn').hidden=true});
+addEventListener('pagehide',()=>{if(micStream)micStream.getTracks().forEach(t=>t.stop());});
+if(navigator.storage?.persist)navigator.storage.persist().catch(()=>{});
+// Subtle blink / mouth reaction on the preview while tracking (whole-image effect).
+window.__applyExpr=(jaw,blink)=>{
+  const t=img.style.display!=='none'?img:model;
+  t.style.filter=blink>.45?'brightness(.82) drop-shadow(0 15px 25px #0008)':'drop-shadow(0 15px 25px #0008)';
+};
+
+let recorder, chunks=[];
+$('record').onclick=async()=>{if(!navigator.mediaDevices?.getDisplayMedia){$('recordStatus').textContent='متصفحج لا يدعم تسجيل الشاشة.';return}
+try{if(recorder?.state==='recording'){recorder.stop();$('record').textContent='● بدء تسجيل الشاشة';return}
+const stream=await navigator.mediaDevices.getDisplayMedia({video:true});chunks=[];recorder=new MediaRecorder(stream);recorder.ondataavailable=e=>{if(e.data.size)chunks.push(e.data)};recorder.onstop=()=>{const a=document.createElement('a');a.href=URL.createObjectURL(new Blob(chunks,{type:'video/webm'}));a.download='NOVA-recording.webm';a.click();stream.getTracks().forEach(t=>t.stop());$('recordStatus').textContent='انتهى التسجيل وتم تجهيز الفيديو.'};recorder.start();$('record').textContent='■ إيقاف التسجيل';$('recordStatus').textContent='التسجيل جارٍ…';}catch(e){$('recordStatus').textContent='لم يبدأ التسجيل؛ تحققي من إذن مشاركة الشاشة.'}};
+</script>
+</body></html>
